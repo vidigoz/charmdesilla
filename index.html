@@ -218,7 +218,7 @@ select { font-family: var(--f-body); font-weight: 500; }
     <ul class="specs" aria-label="Medidas fijas">
       <li>Grosor <b>10 mm</b> = 8.5 + 1.5</li>
       <li>Orificio <b>Ø 5 mm</b></li>
-      <li>Área útil <b id="specArea">500 mm</b></li>
+      <li>Área útil <b id="specArea">600 mm</b></li>
       <li>Letra máx. <b>50 mm</b></li>
     </ul>
   </header>
@@ -308,8 +308,8 @@ select { font-family: var(--f-body); font-weight: 500; }
         <h2>Proporciones</h2>
         <div class="field">
           <label for="area">Área útil de cinta (mm)</label>
-          <input type="number" id="area" min="50" max="2000" step="10" value="500" class="areain">
-          <p class="hint">Es la parte de la cinta donde va el nombre. Por defecto 500 mm (50 cm).</p>
+          <input type="number" id="area" min="50" max="2000" step="10" value="600" class="areain">
+          <p class="hint">Es la parte de la cinta donde va el nombre. Por defecto 600 mm (60 cm).</p>
         </div>
         <div class="field slider">
           <label for="pct">Uso del área útil</label><output id="pctOut" for="pct">100%</output>
@@ -421,7 +421,7 @@ function createCharmCore(opentype, jscad, ClipperLib) {
     baseH: 8.5,     // base de color 1
     capH: 1.5,      // escalón de color 2
     holeD: 5,       // orificio de la agujeta
-    ribbon: 500,    // largo de cinta
+    ribbon: 600,    // largo de cinta
     maxW: 50        // ancho máximo por letra
   };
 
@@ -1188,7 +1188,7 @@ function createCharmCore(opentype, jscad, ClipperLib) {
   function target() { return state.area * state.pct / 100; }
 
   var state = {
-    fill: true, maxH: 120, ball: 'none', ballPos: 'fin', ballK: 110, area: 500, pct: 100,
+    fill: true, maxH: 120, ball: 'none', ballPos: 'fin', ballK: 110, area: 600, pct: 100,
     text: 'LUNA-26', fontId: 'luckiest', sx: 130, hole: 25, inset: 2.5,
     base: '#C9164F', cap: '#F2C200', cordC: '#12B5B0', showCord: true,
     layout: 'cama', bedW: 256, bedH: 256
