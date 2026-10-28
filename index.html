@@ -376,7 +376,7 @@ select { font-family: var(--f-body); font-weight: 500; }
             <label>Cama, alto (mm)<input type="number" id="bedH" min="50" max="1000" step="1" value="256"></label>
           </div>
           <div class="row" style="margin-top:12px">
-            <button type="button" class="btn primary" id="expFull" disabled>Descargar STL completo</button>
+            <button type="button" class="btn primary" id="expFull" disabled>Descargar STLs (letras y pelota)</button>
             <button type="button" class="btn" id="expSplit" disabled>Base y tapa por separado</button>
           </div>
           <div id="exportStatus" role="status" aria-live="polite"></div>
@@ -1535,13 +1535,13 @@ function createCharmCore(opentype, jscad, ClipperLib) {
     return 'charm_' + (s || 'nombre') + (current.ball ? '_' + current.ball.ball : '');
   }
   function buildParts(kind) {
-    var lay = currentLayout(), full = [], base = [], cap = [];
+    var lay = currentLayout(), out = { letras: { full: [], base: [], cap: [] }, pelota: { full: [], base: [], cap: [] } };
     allPieces().forEach(function (p, i) {
-      var d = lay.pos[i];
-      if (p.baseTris.length) { full.push({ tris: p.baseTris, dx: d.dx, dy: d.dy }); base.push({ tris: p.baseTris, dx: d.dx, dy: d.dy }); }
-      if (p.capTris.length) { full.push({ tris: p.capTris, dx: d.dx, dy: d.dy }); cap.push({ tris: p.capTris, dx: d.dx, dy: d.dy }); }
+      var d = lay.pos[i], g = p.kind === 'ball' ? out.pelota : out.letras;
+      if (p.baseTris.length) { g.full.push({ tris: p.baseTris, dx: d.dx, dy: d.dy }); g.base.push({ tris: p.baseTris, dx: d.dx, dy: d.dy }); }
+      if (p.capTris.length) { g.full.push({ tris: p.capTris, dx: d.dx, dy: d.dy }); g.cap.push({ tris: p.capTris, dx: d.dx, dy: d.dy }); }
     });
-    return { full: full, base: base, cap: cap };
+    return out;
   }
   function setStatus(msg, isErr) { var el = $('exportStatus'); el.textContent = msg || ''; el.className = isErr ? 'err' : ''; }
   function plainDownload(name, blob) {
@@ -1556,17 +1556,20 @@ function createCharmCore(opentype, jscad, ClipperLib) {
     await tick();
     try {
       var parts = buildParts(), base = fileBase(), files = [], zipName;
-      if (kind === 'full') {
-        files = [{ name: base + '_completo.stl', data: core.writeSTL(parts.full, base) }]; zipName = base + '_completo.zip';
-      } else {
-        files = [{ name: base + '_base.stl', data: core.writeSTL(parts.base, base + ' base') }, { name: base + '_tapa.stl', data: core.writeSTL(parts.cap, base + ' tapa') }]; zipName = base + '_base-y-tapa.zip';
-      }
+      var sfx = kind === 'full' ? [['full', '']] : [['base', '_base'], ['cap', '_tapa']];
+      zipName = base + (kind === 'full' ? '_completo.zip' : '_base-y-tapa.zip');
+      [['letras', parts.letras], ['pelota', parts.pelota]].forEach(function (g) {
+        sfx.forEach(function (x) {
+          if (g[1][x[0]].length) files.push({ name: base + '_' + g[0] + x[1] + '.stl', data: core.writeSTL(g[1][x[0]], base + ' ' + g[0] + x[1]) });
+        });
+      });
+      if (!files.length) throw new Error('no hay piezas para exportar');
       if (!dlReady) { await new Promise(function (r) { var n = 0; (function w() { if (dlReady || n++ > 60) r(); else setTimeout(w, 100); })(); }); }
       var kb = Math.round(files.reduce(function (a, f) { return a + f.data.byteLength; }, 0) / 1024);
       if (dl) {
         await dl.save({ filename: zipName, data: core.zipStore(files) });
         setStatus('Guardado: ' + zipName + ' (' + kb + ' KB).');
-      } else if (kind === 'full') {
+      } else if (files.length === 1) {
         plainDownload(files[0].name, new Blob([files[0].data], { type: 'model/stl' }));
         setStatus('Descargado: ' + files[0].name + ' (' + kb + ' KB).');
       } else {
